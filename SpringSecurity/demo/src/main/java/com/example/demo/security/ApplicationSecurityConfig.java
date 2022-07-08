@@ -28,6 +28,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+                .csrf().disable() // TODO: Cors filter
                 .authorizeRequests()
                 .antMatchers("/", "index", "/css/*", "/js/*")
                 .permitAll() // anyMatchers and permitAll are used to allow pages with no authorization
@@ -53,6 +54,12 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
               .roles(ADMIN.name())
               .build();
 
-      return new InMemoryUserDetailsManager(leoBarrientosUser, joseUser );
+      UserDetails mynorUser = User.builder()
+              .username("mynorPimentel")
+              .password(passwordEncoder.encode("password"))
+              .roles(ADMINTRAINEE.name())
+              .build();
+
+      return new InMemoryUserDetailsManager(leoBarrientosUser, joseUser, mynorUser );
     }
 }
