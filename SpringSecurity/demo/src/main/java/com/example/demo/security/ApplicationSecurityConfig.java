@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,11 +56,24 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
 //                .httpBasic();  Basic Authentication
                 .formLogin()
-                .loginPage("/login").permitAll() // Login Page
-                .defaultSuccessUrl("/courses", true)
+                    .loginPage("/login")
+                    .permitAll() // Login Page
+                    .defaultSuccessUrl("/courses", true)
+                    .passwordParameter("password") // Custom parameter name and name attribute must match in html
+                    .usernameParameter("username")
                 .and()
-                .rememberMe().tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21)) // defaults to 2 weeks, but we changed to 21 days
-                .key("somethingVerySecured");
+                .rememberMe()
+                    .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21)) // defaults to 2 weeks, but we changed to 21 days
+                    .key("somethingVerySecured")
+                    .rememberMeParameter("remember-me")
+                .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))// Only use when CSRF is Disabled
+                    .clearAuthentication(true)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSSIONID", "remember-me")
+                    .logoutSuccessUrl("/login");
     }
 
     @Override
