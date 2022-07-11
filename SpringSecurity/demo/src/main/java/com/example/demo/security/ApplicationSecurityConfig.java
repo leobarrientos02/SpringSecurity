@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import com.example.demo.auth.ApplicationUserService;
+import com.example.demo.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -25,6 +27,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationUserService applicationUserService;
+
     @Autowired
     public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService) {
         this.passwordEncoder = passwordEncoder;
@@ -34,42 +37,17 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-/*              This is used when data is being passed through the browser but not needed for practice
-                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .and()
- */
                 .csrf().disable() // This is to disable the csrf but not recommended
+                .sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Make JWT stateless
+                .and()
+                .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager()))
                 .authorizeRequests()
                 .antMatchers("/", "index", "/css/*", "/js/*")
                 .permitAll() // anyMatchers and permitAll are used to allow pages with no authorization
                 .antMatchers("/api/**").hasRole(STUDENT.name())
-//                .antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.PUT,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
-//                .antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
                 .anyRequest()
-                .authenticated()
-                .and()
-//                .httpBasic();  Basic Authentication
-                .formLogin()
-                    .loginPage("/login")
-                    .permitAll() // Login Page
-                    .defaultSuccessUrl("/courses", true)
-                    .passwordParameter("password") // Custom parameter name and name attribute must match in html
-                    .usernameParameter("username")
-                .and()
-                .rememberMe()
-                    .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21)) // defaults to 2 weeks, but we changed to 21 days
-                    .key("somethingVerySecured")
-                    .rememberMeParameter("remember-me")
-                .and()
-                .logout()
-                    .logoutUrl("/logout")
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))// Only use when CSRF is Disabled
-                    .clearAuthentication(true)
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSSIONID", "remember-me")
-                    .logoutSuccessUrl("/login");
+                .authenticated();
     }
 
     @Override
@@ -113,3 +91,46 @@ protected UserDetailsService userDetailsService() {
     return new InMemoryUserDetailsManager(leoBarrientosUser, joseUser, mynorUser );
 }
 */
+
+
+/* Without jwt
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+              This is used when data is being passed through the browser but not needed for practice
+                .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .and()
+                .csrf().disable() // This is to disable the csrf but not recommended
+                        .authorizeRequests()
+                        .antMatchers("/", "index", "/css/*", "/js/*")
+                        .permitAll() // anyMatchers and permitAll are used to allow pages with no authorization
+                        .antMatchers("/api/**").hasRole(STUDENT.name())
+//                .antMatchers(HttpMethod.DELETE,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
+//                .antMatchers(HttpMethod.POST,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
+//                .antMatchers(HttpMethod.PUT,"/management/api/**").hasAuthority(COURSE_WRITE.getPermission())
+//                .antMatchers(HttpMethod.GET,"/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
+                        .anyRequest()
+                        .authenticated()
+                        .and()
+//                .httpBasic();  Basic Authentication
+                        .formLogin()
+                        .loginPage("/login")
+                        .permitAll() // Login Page
+                        .defaultSuccessUrl("/courses", true)
+                        .passwordParameter("password") // Custom parameter name and name attribute must match in html
+                        .usernameParameter("username")
+                        .and()
+                        .rememberMe()
+                        .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21)) // defaults to 2 weeks, but we changed to 21 days
+                        .key("somethingVerySecured")
+                        .rememberMeParameter("remember-me")
+                        .and()
+                        .logout()
+                        .logoutUrl("/logout")
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))// Only use when CSRF is Disabled
+                        .clearAuthentication(true)
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSSIONID", "remember-me")
+                        .logoutSuccessUrl("/login");
+                        }
+ */
